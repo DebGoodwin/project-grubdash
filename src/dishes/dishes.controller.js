@@ -10,7 +10,9 @@ const nextId = require("../utils/nextId");
 // Validate body has respective values
 function bodyHasName(req, res, next) {
     const { data: { name } = {} } = req.body;
+    
     if (name) {
+        res.locals.name = name;
         return next();
     }
     next({ 
@@ -22,6 +24,7 @@ function bodyHasName(req, res, next) {
 function bodyHasDesc(req, res, next) {
     const { data: { description } = {} } = req.body;
     if (description) {
+        res.locals.description = description;
         return next();
     }
     next({ 
@@ -33,6 +36,7 @@ function bodyHasDesc(req, res, next) {
 function bodyHasPrice(req, res, next) {
     const { data: { price } = {} } = req.body;
     if (price) {
+        res.locals.price = price;
         return next();
     }
     next({ 
@@ -42,8 +46,7 @@ function bodyHasPrice(req, res, next) {
 }
 
 function priceIsValid(req, res, next) {
-    const { data: { price } = {} } = req.body;
-    // price cannot be missing and must be integer greater than 0
+    const { price } = res.locals;
     if(price > 0 && typeof(price) === 'number') {
         return next();
     } 
@@ -56,7 +59,8 @@ function priceIsValid(req, res, next) {
 function bodyHasImageUrl(req, res, next) {
     const { data: { image_url } = {} } = req.body;
     if (image_url) {
-        return next();
+        res.locals.image_url = image_url;
+        return next();      
     }
     next({ 
         status: 400, 
@@ -82,7 +86,7 @@ function dishExists(req, res, next) {
 function idMatches(req, res, next) {
     const { data: { id } = {} } = req.body;
     const { dishId } = req.params;
-    if (id === dishId || id === '' || id === undefined || id === null) {
+    if (id === dishId || !id) {
         return next();
     }
     next({
@@ -93,8 +97,7 @@ function idMatches(req, res, next) {
 
 // Implement the /dishes handlers 
 function create(req, res) {
-    const { data: { name, description, price, image_url } = {} } = req.body;
-
+    const { name, description, price, image_url } = res.locals;
     const newDish = {
       id: nextId(),
       name,
@@ -106,7 +109,7 @@ function create(req, res) {
     res.status(201).json({ data: newDish });
 }
   
-function read(req, res, next) {
+function read(req, res) {
     res.json({ data: res.locals.dish });
 }
 
@@ -114,7 +117,7 @@ function list(req, res) {
     res.json({ data: dishes })
 }
 
-function update(req, res, next) {
+function update(req, res) {
     const { dish } = res.locals;
 
     const foundDish = dishes.find((orderedDish)=>orderedDish.id === dish.id);

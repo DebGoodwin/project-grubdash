@@ -25,7 +25,7 @@ function orderExists(req, res, next) {
 function idMatches(req, res, next) {
     const { data: { id } = {} } = req.body;
     const { orderId } = req.params;
-    if (id === orderId || id === '' || id === undefined || id === null) {
+    if (id === orderId || !id ) {
         return next();
     }
     next({
@@ -37,6 +37,7 @@ function idMatches(req, res, next) {
 function bodyHasDeliverTo(req, res, next) {
     const { data: { deliverTo } = {} } = req.body;
     if (deliverTo) {
+        res.locals.deliverTo = deliverTo;
         return next();
     }
     next({ 
@@ -48,6 +49,7 @@ function bodyHasDeliverTo(req, res, next) {
 function bodyHasMobile(req, res, next) {
     const { data: { mobileNumber } = {} } = req.body;
     if (mobileNumber) {
+        res.locals.mobileNumber = mobileNumber;
         return next();
     }
     next({ 
@@ -72,7 +74,7 @@ function quantityIsValid(req, res, next) {
     const dishes = res.locals.dishes;
 
     for(let i = 0; i < dishes.length; i++) {
-        if(!dishes[i].quantity || !(dishes[i].quantity > 0) || !Number.isInteger(dishes[i].quantity)) {
+        if(!dishes[i].quantity || !Number.isInteger(dishes[i].quantity) > 0 ) { 
             return next({ 
                 status: 400, 
                 message: `Dish ${i} must have a quantity that is an integer greater than 0` 
@@ -86,6 +88,7 @@ function bodyHasStatus(req, res, next) {
     const { data: { status } = {} } = req.body;
     const validStatus = ['pending','preparing','out-for-delivery'];
     if (validStatus.includes(status)) {
+        res.locals.status = status;
         return next();
     }
     next({ 
@@ -97,7 +100,7 @@ function bodyHasStatus(req, res, next) {
   
 // Orders handlers 
 function create(req, res) {
-    const { data: { deliverTo, mobileNumber, status, dishes } = {} }= req.body;
+    const { deliverTo, mobileNumber, status, dishes } = res.locals;
     const newOrder = {
       id: nextId(),
       deliverTo,
@@ -128,7 +131,7 @@ function update(req, res, next) {
         order.status = status;
         order.dishes = dishes;
     }
-    res.json({ data: foundOrder });
+    res.json({ data: order });
 }
 
 function destroy(req, res, next) {
